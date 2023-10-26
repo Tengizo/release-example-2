@@ -1,0 +1,40 @@
+name: Fetch Release Notes
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  fetch-and-push-notes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+
+      - name: Fetch Release Notes
+        run: |
+          RELEASE_NOTES=$(gh release view ${{ github.event.release.tag_name }} --repo ${{ github.repository }} --json body -q .body | base64)
+          echo "RELEASE_NOTES=$RELEASE_NOTES" >> $GITHUB_ENV
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Clone Central Repository
+        run: git clone https://github.com/Tengizo/release-central.git release-central
+
+      - name: Create and Push Release Notes
+        run: |
+          cd release-central
+          mkdir -p ${{ github.repository }}
+          RELEASE_NOTES=$(echo $RELEASE_NOTES | base64 --decode)
+          echo "${{ env.RELEASE_NOTES }}" > ${{ github.repository }}/${{ github.event.release.tag_name }}
+          git add .
+          git commit -m "Add release notes for ${{ github.repository }}@${{ github.event.release.tag_name }}"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_NOTES: ${{ env.RELEASE_NOTES }}
