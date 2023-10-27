@@ -2,8 +2,7 @@ name: Fetch Release Notes
 
 on:
   release:
-    types:
-      - published
+    types: [published, edited]
 
 jobs:
   fetch-and-push-notes:
@@ -16,28 +15,37 @@ jobs:
         run: |
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
+      - name: Clone Central Repository
+        run: git clone https://github.com/Tengizo/release-central.git release-central
 
       - name: Fetch Release Notes
         run: |
-          mkdir release-notes
-          gh release view ${{ github.event.release.tag_name }} --repo ${{ github.repository }} --json body -q .body > release-notes/release-notes-${{ github.event.release.tag_name }}.txt
           REPO_NAME="${REPO_NAME##*/}"
-          echo "REPO_NAME=${REPO_NAME}" >> $GITHUB_ENV
+          mkdir -p $REPO_NAME
+          gh release view ${{ github.event.release.tag_name }} --repo ${{ github.repository }} --json body -q .body > release-central/$REPO_NAME/release-notes-${{ github.event.release.tag_name }}.txt
+          echo "TARGET_DIR=${REPO_NAME}" >> $GITHUB_ENV
+          echo "SOURCE_DIR=release-central/${REPO_NAME}" >> $GITHUB_ENV
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO_NAME: "${{ github.repository }}"
+      - name: Log
+        run: |
+          echo "Source directory ${{ env.SOURCE_DIR }}"
+          echo "Target directory ${{ env.TARGET_DIR }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO_NAME: "${{ github.repository }}"
       - name: Pushes to another repository
         uses: cpina/github-action-push-to-another-repository@main
         with:
-          source-directory: 'release-notes'
+          source-directory: ${{ env.SOURCE_DIR }}
           destination-github-username: 'Tengizo'
           destination-repository-name: 'release-central'
-          target-directory: ${{ env.REPO_NAME }}
+          target-directory: ${{ env.TARGET_DIR }}
           user-email: chtengo@gmail.com
           target-branch: master
         env:
           API_TOKEN_GITHUB: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          REPO_NAME: ${{ env.REPO_NAME }}
 #      - name: Create and Push Release Notes
 #        run: |
 #          cd release-central
