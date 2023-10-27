@@ -23,6 +23,7 @@ jobs:
           REPO_NAME="${REPO_NAME##*/}"
           mkdir -p $REPO_NAME
           gh release view ${{ github.event.release.tag_name }} --repo ${{ github.repository }} --json body -q .body > release-central/$REPO_NAME/${{ github.event.release.tag_name }}.md
+          echo "REPO_NAME=${REPO_NAME}" >> $GITHUB_ENV
           echo "TARGET_DIR=${REPO_NAME}" >> $GITHUB_ENV
           echo "SOURCE_DIR=release-central/${REPO_NAME}" >> $GITHUB_ENV
         env:
@@ -44,6 +45,7 @@ jobs:
           target-directory: ${{ env.TARGET_DIR }}
           user-email: chtengo@gmail.com
           target-branch: master
+          commit-message:  Add release notes ${{ github.event.release.tag_name }} for ${{ github.repository }}
         env:
           API_TOKEN_GITHUB: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 #      - name: Create and Push Release Notes
