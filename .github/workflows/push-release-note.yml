@@ -22,7 +22,7 @@ jobs:
         run: |
           REPO_NAME="${REPO_NAME##*/}"
           mkdir -p $REPO_NAME
-          gh release view ${{ github.event.release.tag_name }} --repo ${{ github.repository }} --json body -q .body > release-central/$REPO_NAME/release-notes-${{ github.event.release.tag_name }}.txt
+          gh release view ${{ github.event.release.tag_name }} --repo ${{ github.repository }} --json body -q .body > release-central/$REPO_NAME/${{ github.event.release.tag_name }}.md
           echo "TARGET_DIR=${REPO_NAME}" >> $GITHUB_ENV
           echo "SOURCE_DIR=release-central/${REPO_NAME}" >> $GITHUB_ENV
         env:
