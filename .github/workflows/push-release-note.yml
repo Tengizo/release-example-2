@@ -19,22 +19,36 @@ jobs:
 
       - name: Fetch Release Notes
         run: |
-          RELEASE_NOTES=$(gh release view ${{ github.event.release.tag_name }} --repo ${{ github.repository }} --json body -q .body | base64)
-          echo "RELEASE_NOTES=$RELEASE_NOTES" >> $GITHUB_ENV
+          mkdir release-notes
+          gh release view ${{ github.event.release.tag_name }} --repo ${{ github.repository }} --json body -q .body > release-notes/release-notes-${{ github.event.release.tag_name }}.txt
+          REPO_NAME="${REPO_NAME##*/}"
+          echo "REPO_NAME=${REPO_NAME}" >> $GITHUB_ENV
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Clone Central Repository
-        run: git clone https://github.com/Tengizo/release-central.git release-central
-
-      - name: Create and Push Release Notes
-        run: |
-          cd release-central
-          mkdir -p ${{ github.repository }}
-          RELEASE_NOTES=$(echo $RELEASE_NOTES | base64 --decode)
-          echo "${{ env.RELEASE_NOTES }}" > ${{ github.repository }}/${{ github.event.release.tag_name }}
-          git add .
-          git commit -m "Add release notes for ${{ github.repository }}@${{ github.event.release.tag_name }}"
-          git push
+          REPO_NAME: "${{ github.repository }}"
+      - name: Pushes to another repository
+        uses: cpina/github-action-push-to-another-repository@main
+        with:
+          source-directory: 'release-notes'
+          destination-github-username: 'Tengizo'
+          destination-repository-name: 'release-central'
+          target-directory: ${{ env.REPO_NAME }}
+          user-email: chtengo@gmail.com
+          target-branch: master
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_NOTES: ${{ env.RELEASE_NOTES }}
+          API_TOKEN_GITHUB: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          REPO_NAME: ${{ env.REPO_NAME }}
+#      - name: Create and Push Release Notes
+#        run: |
+#          cd release-central
+#          REPO_NAME="${REPO_NAME##*/}"
+#          mkdir -p $REPO_NAME
+#          RELEASE_NOTES=$(<../release-notes.txt)
+#          echo "${RELEASE_NOTES}" > $REPO_NAME/${{ github.event.release.tag_name }}
+#          git add .
+#          git commit -m "Add release notes for $REPO_NAME@${{ github.event.release.tag_name }}"
+#          git push
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+#          REPO_NAME: "${{ github.repository }}"
+
