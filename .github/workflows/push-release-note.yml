@@ -2,7 +2,7 @@ name: Fetch Release Notes
 
 on:
   release:
-    types: [published, edited]
+    types: [published]
 
 jobs:
   fetch-and-push-notes:
@@ -22,7 +22,9 @@ jobs:
         run: |
           REPO_NAME="${REPO_NAME##*/}"
           mkdir -p $REPO_NAME
-          gh release view ${{ github.event.release.tag_name }} --repo ${{ github.repository }} --json body -q .body > release-central/$REPO_NAME/${{ github.event.release.tag_name }}.md
+          MD_FILE=$REPO_NAME/${{ github.event.release.tag_name }}.md
+          gh release view ${{ github.event.release.tag_name }} --repo ${{ github.repository }} --json body -q .body > $MD_FILE
+          sed -E 's|@([a-zA-Z0-9_-]+)|[@\1](https://github.com/\1)|g; s|#([0-9]+)|[#\1](https://github.com/${{ github.repository }}/pull/\1)|g' $MD_FILE > release-central/$MD_FILE
           echo "REPO_NAME=${REPO_NAME}" >> $GITHUB_ENV
           echo "TARGET_DIR=${REPO_NAME}" >> $GITHUB_ENV
           echo "SOURCE_DIR=release-central/${REPO_NAME}" >> $GITHUB_ENV
