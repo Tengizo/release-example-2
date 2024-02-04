@@ -1,3 +1,5 @@
+# Test repo for autimated relase notes generation
+
 # release-example
 
 Test change
